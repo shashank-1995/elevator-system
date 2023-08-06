@@ -1,0 +1,260 @@
+{
+	"info": {
+		"_postman_id": "68416cdc-3c3b-4d78-bdd2-3168a9ac9327",
+		"name": "elevator_system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "21348869",
+		"_collection_link": "https://solar-star-671403.postman.co/workspace/My-Workspace~cee2b06c-c24e-485a-8bff-8a0c99e63fa2/collection/21348869-68416cdc-3c3b-4d78-bdd2-3168a9ac9327?action=share&creator=21348869&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "process_request",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"floor_requests\": [\n        5,\n        -2,\n        7,\n        9,\n        10,\n        9,\n        12,\n        -1\n    ],\n    \"building_id\": \"1\",\n    \"request_queue\": [\n        [\n            -3,\n            12,\n            8,\n            6,\n            4,\n            0,\n            5\n        ],\n        [\n            -3,\n            0,\n            5\n        ],\n        [\n            4,\n            0,\n            5\n        ],\n        [\n            8,\n            6,\n            4,\n            0,\n            5\n        ],\n        [\n            2,\n            4,\n            8,\n            10,\n            12\n        ]\n    ],\n    \"lift_positions\": [\n        9,\n        10,\n        5,\n        0,\n        4\n    ]\n}"
+				},
+				"url": "http://127.0.0.1:8000/api/elevators/process_request/"
+			},
+			"response": [
+				{
+					"name": "process_request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"active_floors\": [\n        5,\n        -2,\n        7,\n        9,\n        10,\n        9,\n        12,\n        -1\n    ],\n    \"building_id\": \"1\",\n    \"request_queue\": [\n        [\n            -3,\n            12,\n            8,\n            6,\n            4,\n            0,\n            5\n        ],\n        [\n            -3,\n            0,\n            5\n        ],\n        [\n            4,\n            0,\n            5\n        ],\n        [\n            8,\n            6,\n            4,\n            0,\n            5\n        ],\n        [\n            2,\n            4,\n            8,\n            10,\n            12\n        ]\n    ],\n    \"lift_positions\": [\n        9,\n        10,\n        5,\n        0,\n        4\n    ]\n}"
+						},
+						"url": "http://127.0.0.1:8000/api/elevators/process_request/"
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Sun, 06 Aug 2023 08:50:12 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, Cookie"
+						},
+						{
+							"key": "Allow",
+							"value": "POST, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "3809"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"elevators\": {\n        \"30\": {\n            \"current_floor\": 9,\n            \"is_running\": false,\n            \"requests\": [\n                12,\n                4,\n                0,\n                5\n            ],\n            \"direction\": \"Up\",\n            \"processed_requests\": [\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 9,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 9,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 10,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 11,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 12,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 12,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 11,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 10,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 9,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 8,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 7,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 6,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 5,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 5,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 4,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 4,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 3,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 2,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 30,\n                    \"current_floor\": 0,\n                    \"is_running\": false\n                }\n            ],\n            \"error\": null\n        },\n        \"31\": {\n            \"current_floor\": 10,\n            \"is_running\": false,\n            \"requests\": [\n                9,\n                2,\n                4,\n                8,\n                10,\n                12\n            ],\n            \"direction\": \"Down\",\n            \"processed_requests\": [\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 10,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 10,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 9,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 9,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 10,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 10,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 11,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 31,\n                    \"current_floor\": 12,\n                    \"is_running\": false\n                }\n            ],\n            \"error\": null\n        },\n        \"32\": {\n            \"current_floor\": 5,\n            \"is_running\": false,\n            \"requests\": [\n                5,\n                4,\n                0,\n                5\n            ],\n            \"direction\": \"Up\",\n            \"processed_requests\": [\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 5,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 5,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 4,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 4,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 3,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 2,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 32,\n                    \"current_floor\": 0,\n                    \"is_running\": false\n                }\n            ],\n            \"error\": null\n        },\n        \"33\": {\n            \"current_floor\": 0,\n            \"is_running\": false,\n            \"requests\": [\n                -2,\n                -3,\n                12,\n                8,\n                6,\n                4,\n                0,\n                5\n            ],\n            \"direction\": \"Down\",\n            \"processed_requests\": [\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": 0,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": 0,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": -1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": -2,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": -2,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 33,\n                    \"current_floor\": -3,\n                    \"is_running\": false\n                }\n            ],\n            \"error\": null\n        },\n        \"34\": {\n            \"current_floor\": 4,\n            \"is_running\": false,\n            \"requests\": [\n                -1,\n                -3,\n                0,\n                5\n            ],\n            \"direction\": \"Down\",\n            \"processed_requests\": [\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 4,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 4,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 3,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 2,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 0,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": -1,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": -1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 0,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 0,\n                    \"is_running\": false\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 1,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 2,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 3,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 4,\n                    \"is_running\": true\n                },\n                {\n                    \"lift_number\": 34,\n                    \"current_floor\": 5,\n                    \"is_running\": false\n                }\n            ],\n            \"error\": null\n        }\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "building",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"cybercity\"\n}"
+				},
+				"url": "http://127.0.0.1:8000/api/building/"
+			},
+			"response": [
+				{
+					"name": "building",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"cybercity\"\n}"
+						},
+						"url": "http://127.0.0.1:8000/api/building/"
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Sat, 05 Aug 2023 10:54:05 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, Cookie"
+						},
+						{
+							"key": "Allow",
+							"value": "GET, POST, HEAD, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "107"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 2,\n    \"created\": \"2023-08-05T10:54:05.753358Z\",\n    \"updated\": \"2023-08-05T10:54:05.753393Z\",\n    \"name\": \"cybercity\"\n}"
+				}
+			]
+		},
+		{
+			"name": "initialize 'n' elevators",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"num_elevators\": 5, \"building_id\": 2}"
+				},
+				"url": "http://127.0.0.1:8000/api/elevators/"
+			},
+			"response": [
+				{
+					"name": "initialize 'n' elevators",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"num_elevators\": 5, \"building_id\": 2}"
+						},
+						"url": "http://127.0.0.1:8000/api/elevators/"
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Sat, 05 Aug 2023 10:54:13 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.6"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept, Cookie"
+						},
+						{
+							"key": "Allow",
+							"value": "GET, POST, HEAD, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "38"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						},
+						{
+							"key": "Cross-Origin-Opener-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"message\": \"5 elevators initialized.\"\n}"
+				}
+			]
+		}
+	]
+}
