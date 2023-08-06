@@ -111,6 +111,7 @@ The project is organized into the following main directories:
 ## API Endpoints
 
 The API endpoints can be accessed at `http://localhost:8000/api/`. The available endpoints are as follows:
+    ```
     a.first create an building using building collection.
     b.add elevators using 'initialize n elevators' api
         - provide building_id and num_elevators in body
@@ -120,6 +121,8 @@ The API endpoints can be accessed at `http://localhost:8000/api/`. The available
             b. building_id : building_id
             c. request_queue : -  request made in each elevator
             d. lift_positions :  - Current elevator postions
+    ```
+Postman collection is added in the project with name "elevator_system.postman_collection.json"
 ## Note
 
 The project is a simulation and does not control any physical elevators. It is designed to demonstrate the working of an elevator system using Django and Django REST framework.
