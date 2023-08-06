@@ -66,7 +66,7 @@ Before running the project, make sure you have the following installed on your s
 1. Create a virtual environment and activate it:
      ```
      python3 -m venv venv
-     ource venv/bin/activate
+     source venv/bin/activate
      ```
 
 2. Clone the project repository:
@@ -83,7 +83,7 @@ Before running the project, make sure you have the following installed on your s
 
 
 4. Configure the database settings:
-    - Open the `config/settings.py` file.
+    - Open the `config.py` file.
     - Change the database name to the newly created database (`elevator_db`).
 
 5. Apply database migrations:
@@ -134,7 +134,7 @@ The project follows a Django-based architecture with a Model-View-Controller (MV
 - elevator: The Django app containing the core application code for elevators.
 
 ## Database Modelling
-- The database schema has been designed to handle elevator and building-related data. The Elevator model represents an elevator with various attributes such as current_floor, direction, and is_running.
+- The database schema has been designed to handle elevator and building-related data. The Elevator model represents an elevator with various attributes such as current_floor, direction, and is_operational.
 
 ## Plugins or Libraries Used
 The project utilizes the following libraries and frameworks:
