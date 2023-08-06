@@ -55,12 +55,6 @@ class Elevator(BaseModel):
         ordering = ['created']
         unique_together = (('name', 'building'), )
 
-class Floor(BaseModel):
-    number = models.PositiveIntegerField(unique=True)
-
-    def __str__(self):
-        return f"Floor {self.number}"
-
 class Building(BaseModel):
     name =  models.CharField(max_length=512, null=True, blank=True, db_index=True)
     

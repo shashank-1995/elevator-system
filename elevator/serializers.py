@@ -1,10 +1,5 @@
 from rest_framework import serializers
-from .models import Elevator, Floor, Building
-
-class FloorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Floor
-        fields = '__all__'
+from .models import Elevator, Building
 
 class ElevatorSerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,12 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Elevator, Floor, Building
-from .serializers import ElevatorSerializer, FloorSerializer, BuildingSerializer
+from .models import Elevator, Building
+from .serializers import ElevatorSerializer, BuildingSerializer
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from elevator.utilities import validate_and_get_building, validate_num_elevators
-import numpy as np
-import time
 class ElevatorViewSet(viewsets.ModelViewSet):
     queryset = Elevator.objects.all()
     serializer_class = ElevatorSerializer
@@ -54,7 +52,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
     Returns:
         Response: A JSON response containing the elevator system response with information about each elevator's status and processed requests.
     """
-        active_floors = request.data.get('active_floors')
+        active_floors = request.data.get('floors_requests')
         building_id = request.data.get('building_id')
         request_queue =  request.data.get('request_queue')
         lift_positions = request.data.get('lift_positions')
@@ -302,7 +300,3 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
-
-class FloorViewSet(viewsets.ModelViewSet):
-    queryset = Floor.objects.all()
-    serializer_class = FloorSerializer
