@@ -52,7 +52,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
     Returns:
         Response: A JSON response containing the elevator system response with information about each elevator's status and processed requests.
     """
-        active_floors = request.data.get('floors_requests')
+        active_floors = request.data.get('floor_requests')
         building_id = request.data.get('building_id')
         request_queue =  request.data.get('request_queue')
         lift_positions = request.data.get('lift_positions')
@@ -105,7 +105,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             # print information on screen
             elevator_response[elevator_selected.id] = {
                 "current_floor":  elevator_selected.current_floor,
-                "is_running": elevator_selected.is_running,
+                "is_operational": elevator_selected.is_operational,
                 "requests": elevator_selected.requests,
                 "direction": elevator_selected.direction,
                 "processed_requests": [],
@@ -129,7 +129,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
     
     def current_status(self, elevator):
         return {
-            "lift_number": elevator.id, "current_floor": elevator.current_floor, "is_running": elevator.is_running
+            "lift_number": elevator.id, "current_floor": elevator.current_floor, "is_operational": elevator.is_operational
         }
 
     def calculate_service_in_directions(self, elevator):
@@ -222,8 +222,8 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         """
         # Continue running until all requests in the list are finished
         while True:
-            # Set is_running to True, indicating that the elevator is in operation
-            elevator.is_running = True
+            # Set is_operational to True, indicating that the elevator is in operation
+            elevator.is_operational = True
 
             # Check if the elevator is currently on a floor that is in the request list
             if elevator.current_floor in request_list:
@@ -232,7 +232,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
                     request_list.remove(elevator.current_floor)
 
                 # Stop the elevator, as it has reached one of its destinations
-                elevator.is_running = False
+                elevator.is_operational = False
 
                 # Add the current status to the response list
                 self.current_response_list.append(self.current_status(elevator))
@@ -269,7 +269,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
     def reset_lift_params(self, elevator):
         # when request finishes reset the direction
         elevator.direction = "Up"
-        elevator.is_running = False
+        elevator.is_operational = False
         elevator.is_selected = False
         elevator.requests = []
         elevator.save()

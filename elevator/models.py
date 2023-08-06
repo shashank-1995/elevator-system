@@ -43,8 +43,7 @@ class Elevator(BaseModel):
                 'name': self.name,
                 'current_floor': self.current_floor,
                 'is_door_open': self.is_door_open,
-                'is_operational': self.is_operational,
-                'is_running': self.is_running
+                'is_operational': self.is_operational
             }
             # Cache the status data for future access with a TTL (e.g., 60 seconds)
             cache.set(cache_key, status, timeout=60)

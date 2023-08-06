@@ -11,8 +11,7 @@ def update_elevator_status_cache(sender, instance, **kwargs):
                 'name': instance.name,
                 'current_floor': instance.current_floor,
                 'is_door_open': instance.is_door_open,
-                'is_operational': instance.is_operational,
-                'is_running': instance.is_running
+                'is_operational': instance.is_operational
             }
     # Cache the status data for future access with a TTL (e.g., 60 seconds)
     cache.set(cache_key, status, timeout=60)
