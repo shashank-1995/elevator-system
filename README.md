@@ -72,6 +72,7 @@ Before running the project, make sure you have the following installed on your s
 2. Clone the project repository:
      ```
      git clone https://github.com/shashank-1995/elevator-system.git
+     git checkout master
      cd elevator-system
      ```
 
