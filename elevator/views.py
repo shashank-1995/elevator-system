@@ -5,6 +5,7 @@ from .serializers import ElevatorSerializer, BuildingSerializer
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from elevator.utilities import validate_and_get_building, validate_num_elevators
+import copy
 class ElevatorViewSet(viewsets.ModelViewSet):
     queryset = Elevator.objects.all()
     serializer_class = ElevatorSerializer
@@ -40,18 +41,18 @@ class ElevatorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def process_request(self, request, pk=None):
         """
-    Process elevator requests for each elevator in the system.
+        Process elevator requests for each elevator in the system.
 
-    This function takes elevator requests, active floors, building_id, request_queue, and lift_positions, and processes them to efficiently
-    allocate elevators to fulfill the requests.
+        This function takes elevator requests, active floors, building_id, request_queue, and lift_positions, and processes them to efficiently
+        allocate elevators to fulfill the requests.
 
-    Parameters:
-        request (HttpRequest): The HTTP request object.
-        pk (int, optional): The primary key of the elevator (not used in this context).
+        Parameters:
+            request (HttpRequest): The HTTP request object.
+            pk (int, optional): The primary key of the elevator (not used in this context).
 
-    Returns:
-        Response: A JSON response containing the elevator system response with information about each elevator's status and processed requests.
-    """
+        Returns:
+            Response: A JSON response containing the elevator system response with information about each elevator's status and processed requests.
+        """
         active_floors = request.data.get('floor_requests')
         building_id = request.data.get('building_id')
         request_queue =  request.data.get('request_queue')
@@ -61,20 +62,26 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         
         if len(lift_positions) < 0:
             lift_positions = [0] * elevators.count()
-        
-        count = 0
-        for elevator in elevators:
-            elevator.current_floor = lift_positions[count]
-            elevator.save()
-            count += 1
-        
+        elevator_response = {}
         if elevators.count() == len(lift_positions):
-            for each in range(0, elevators.count()):
-                elevators[each].current_floor = lift_positions[each]
-                elevators[each].save()
+            count = 0
+            for elevator in elevators:
+                elevator_response[elevator.id] = {      
+                    "elevator_id": elevator.id,                                   
+                    "current_floor":  lift_positions[count],
+                    "is_operational": elevator.is_operational,
+                    "requests": [],
+                    "direction": "",
+                    "processed_requests": [],
+                    "error": None
+                }
+                elevator.current_floor = lift_positions[count]
+                elevator.save()
+                count += 1
+    
         active_floors.sort()
 
-        elevator_response = {}
+        
 
         # process each floor, select the closest elevator for that floor
         for queue_counter, floor in enumerate(active_floors):
@@ -100,31 +107,29 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 
             # mark as selected
             elevator_selected.is_selected = True
+            elevator_selected.save()
             
 
-            # print information on screen
-            elevator_response[elevator_selected.id] = {
-                "current_floor":  elevator_selected.current_floor,
-                "is_operational": elevator_selected.is_operational,
-                "requests": elevator_selected.requests,
-                "direction": elevator_selected.direction,
-                "processed_requests": [],
-                "error": None
-            }
-            elevator_selected.save()
+            elevator_response[elevator_selected.id]["direction"] = elevator_selected.direction
         
-
+        
         # process request for each elevator
         for elevator in elevators:
             if elevator.is_selected:
+                elevator_response[elevator.id]["requests"] = copy.deepcopy(elevator.requests)
                 processed_requests = self.process_elevator_request(elevator)
                 elevator_response[elevator.id]["processed_requests"] = processed_requests
             else:
                 # Mark unselected elevators as not operational
                 elevator.is_operational = False
                 elevator.save()
+        
+        final_response = []
+        for _, elevator_data in elevator_response.items():
+            final_response.append(elevator_data)
+        
 
-        return Response({'elevators': elevator_response}, status=status.HTTP_200_OK)
+        return Response({'flag': True, 'results': final_response}, status=status.HTTP_200_OK)
 
     
     def current_status(self, elevator):
@@ -132,122 +137,66 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             "lift_number": elevator.id, "current_floor": elevator.current_floor, "is_operational": elevator.is_operational
         }
 
-    def calculate_service_in_directions(self, elevator):
-        """
-        Calculates the service lists for the up and down directions.
-        Returns two lists: service_in_up_direction and service_in_down_direction.
-        """
-        elevator.requests = sorted(elevator.requests)  # Sort the requests in ascending order
-        current_floor = elevator.current_floor
-
-        # Separate the requests into two lists based on their direction
-        service_in_up_direction = [floor for floor in elevator.requests if floor > current_floor]
-        service_in_down_direction = [floor for floor in elevator.requests if floor < current_floor]
-
-        # Reverse the down direction list to prioritize lower floors first
-        service_in_down_direction = service_in_down_direction[::-1]
-
-        return service_in_up_direction, service_in_down_direction
-
 
     def process_elevator_request(self, elevator):
         """
         Process elevator requests.
-        """
-
-        self.current_response_list = []
-
-        # Go to requested floor
-        print("Need To Process => ", elevator.requests)
-
-        if elevator.requests[0] != elevator.current_floor:
-            self.current_response_list.append(self.current_status(elevator))
-            self.execute_request(elevator.requests[0:1], elevator)
-        else:
-            self.current_response_list.append(self.current_status(elevator))
-            elevator.is_door_open = True
-            elevator.is_door_open = False
-
-        # User presses the buttons, lift decides automatically
-        elevator.requests = elevator.requests[1:]
-        service_in_up_direction, service_in_down_direction = self.calculate_service_in_directions(elevator)
-
-        # Nothing to service in up direction, go down
-        if len(service_in_up_direction) == 0:
-            elevator.direction = "Down"
-        # Nothing to service in down direction, go up
-        elif len(service_in_down_direction) == 0:
-            elevator.direction = "Up"
-        # Calculate cost and then decide direction
-        else:
-            # Effort_up = distance between first up floor and current floor
-            effort_up = abs(service_in_up_direction[0] - elevator.current_floor)
-            # Effort_down = distance between first down floor and current floor
-            effort_down = abs(service_in_down_direction[0] - elevator.current_floor)
-
-            # Choose direction
-            if effort_up <= effort_down:
-                elevator.direction = "Up"
-            else:
-                elevator.direction = "Down"
-
-        # Define the directions in a list
-        directions = ["Down", "Up"]
-
-        # Execute the request for up and down directions
-        for direction in directions:
-            if elevator.direction == direction:
-                self.execute_request(service_in_down_direction, elevator)
-            else:
-                self.execute_request(service_in_up_direction, elevator)
-
-            # Reverse the direction
-            elevator.direction = directions[(directions.index(elevator.direction) + 1) % len(directions)]
-
-        # Set params to denote that it is available
-        self.reset_lift_params(elevator)
-        return self.current_response_list
-
-    
-    def execute_request(self, request_list, elevator):
-        """
-        Execute a request for the elevator.
 
         Parameters:
-            request_list (list): The list of floors to be serviced by the elevator.
-            elevator (Elevator): The elevator object to execute the requests.
+            elevator (Elevator): The elevator object to process requests.
+
+        Returns:
+            List: A list of dictionaries containing elevator status at each step.
+        """
+        self.current_response_list = []
+
+        # Process the elevator requests one by one
+        while elevator.requests:
+            current_floor = elevator.current_floor
+
+            # Step 1: Find the closest floor from the remaining requests
+            closest_floor = min(elevator.requests, key=lambda floor: abs(floor - current_floor))
+
+            # Step 2: Move the elevator towards the closest floor
+            self.move_towards_floor(elevator, closest_floor)
+
+            # Step 3: Elevator has reached the closest floor, open and close the door
+            self.current_response_list.append({"lift_id": elevator.id, "is_door_opened": True})
+            self.current_response_list.append({"lift_id": elevator.id, "is_door_opened": False})
+
+            # Step 4: Remove the current floor from the requests as it has been serviced
+            elevator.requests.remove(elevator.current_floor)
+
+            # Append the current status to the response list
+            self.current_response_list.append(self.current_status(elevator))
+
+        # All requests have been serviced, reset the elevator parameters
+        self.reset_elevator_params(elevator)
+
+        # Return the list of elevator status at each step
+        return self.current_response_list
+
+    def move_towards_floor(self, elevator, target_floor):
+        """
+        Move the elevator towards the target floor.
+
+        Parameters:
+            elevator (Elevator): The elevator object.
+            target_floor (int): The floor to which the elevator needs to move.
 
         Returns:
             None
         """
-        # Continue running until all requests in the list are finished
-        while True:
-            # Set is_operational to True, indicating that the elevator is in operation
-            elevator.is_operational = True
+        # Set the elevator direction based on the target floor
+        elevator.direction = "Up" if target_floor > elevator.current_floor else "Down"
 
-            # Check if the elevator is currently on a floor that is in the request list
-            if elevator.current_floor in request_list:
-                # Remove the processed floor from the request list
-                while request_list.count(elevator.current_floor) > 0:
-                    request_list.remove(elevator.current_floor)
-
-                # Stop the elevator, as it has reached one of its destinations
-                elevator.is_operational = False
-
-                # Add the current status to the response list
-                self.current_response_list.append(self.current_status(elevator))
-
-                # Open and close the elevator door
-                elevator.is_door_open = True
-                elevator.is_door_open = False
-
-            # If we have processed all the requests in the list, break the loop
-            if len(request_list) == 0:
-                break
-
-            # Add the current status to the response list and move the elevator one step
-            self.current_response_list.append(self.current_status(elevator))
+        # Continue moving until the elevator reaches the target floor
+        while elevator.current_floor != target_floor:
+            # Move the elevator one step in the appropriate direction
             self.move_one_step(elevator)
+
+            # Append the current status to the response list at each step
+            self.current_response_list.append(self.current_status(elevator))
 
     def move_one_step(self, elevator):
         """
@@ -266,10 +215,10 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             print(e)
             return e
 
-    def reset_lift_params(self, elevator):
+    def reset_elevator_params(self, elevator):
         # when request finishes reset the direction
         elevator.direction = "Up"
-        elevator.is_operational = False
+        elevator.is_operational = True
         elevator.is_selected = False
         elevator.requests = []
         elevator.save()
