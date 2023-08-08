@@ -32,8 +32,8 @@ def validate_num_elevators(num_elevators):
 
     return num_elevators
 
-def validate_floor_requests(floor_requests):
-    if not isinstance(floor_requests, list) or not all(isinstance(floor, int) for floor in floor_requests):
+def validate_list_of_int(payload_object):
+    if not isinstance(payload_object, list) or not all(isinstance(floor, int) for floor in payload_object):
         return False
     return True
 
@@ -49,3 +49,6 @@ def validate_current_lift_positions(current_lift_positions, elevators_count):
 
 def initialize_response_keys():
     return {"flag":False,"message": "Unable to fetch response", "error":"nil"}
+
+def update_response_keys(flag, message, error, result):
+    return {"flag":flag,"message": message, "error":error, 'data':result}

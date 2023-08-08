@@ -6,11 +6,12 @@ from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from elevator.utilities import (validate_and_get_building,
                                 validate_num_elevators,
-                                validate_floor_requests,
+                                validate_list_of_int,
                                 validate_request_queue,
-                                initialize_response_keys)
+                                initialize_response_keys,
+                                update_response_keys)
 import copy
-
+import json
 class ElevatorViewSet(viewsets.ModelViewSet):
     queryset = Elevator.objects.all()
     serializer_class = ElevatorSerializer
@@ -42,9 +43,9 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 
         elevators_obj = Elevator.objects.bulk_create(created_elevators, batch_size=100)
         if elevators_obj:
-            context["flag"] = True
-            context["message"] = f'{num_elevators} elevators initialized.'
-            context["data"] = self.get_serializer(elevators_obj, many=True).data
+            context = update_response_keys(True, f'{num_elevators} elevators initialized.',
+                                           "nil",
+                                           self.get_serializer(elevators_obj, many=True).data)
 
         return Response(context, status=status.HTTP_201_CREATED)
 
@@ -70,7 +71,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         request_queue =  request.data.get('request_queue')
         current_lift_positions = request.data.get('current_lift_positions')
 
-        if not validate_floor_requests(floor_requests):
+        if not validate_list_of_int(floor_requests):
             return Response({'flag': False, 'error': 'Invalid floor requests'}, status=status.HTTP_400_BAD_REQUEST)
 
         building = validate_and_get_building(building_id)
@@ -113,9 +114,9 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 
         final_response = list(elevator_response.values())
         if final_response:
-            context["message"] = 'Successfully fetched response'
-            context['data'] = final_response
-
+            context = update_response_keys(True, 'Successfully fetched response',
+                                           "nil",
+                                           final_response)
         return Response(context, status=status.HTTP_200_OK)
 
 
@@ -131,21 +132,19 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 
     def initialize_elevator_response(self, elevators, current_lift_positions):
         elevator_response = {}
-        count = 0
-        for elevator in elevators:
+        for elevator, current_floor in zip(elevators, current_lift_positions):
             elevator_response[elevator.id] = {
                 "elevator_id": elevator.id,
                 "elevator_name": elevator.name,
                 "building_id": elevator.building.id,
                 "building_name": elevator.building.name,
-                "current_floor":  current_lift_positions[count],
+                "current_floor": current_floor,
                 "is_operational": elevator.is_operational
             }
-            elevator.current_floor = current_lift_positions[count]
+            elevator.current_floor = current_floor
             elevator.save()
-            count += 1
-        return elevator_response
 
+        return elevator_response
 
     def current_status(self, elevator, is_door_opened):
         current_status_dict = {
@@ -277,17 +276,38 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         return Response({'flag': True, 'message': 'Elevator marked as not working.'}, status=status.HTTP_200_OK)
 
 
+    @action(detail=False, methods=['post'])
+    def display_status(self, request, pk=None):
+        elevators = request.data.get('elevators', [])
+        context = initialize_response_keys()
+        context['results'] = []
+        if not validate_list_of_int(elevators):
+            context["message"] = 'Invalid elevators request'
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        queryset = Elevator.objects.filter()
+        if elevators:
+            queryset = queryset.filter(id__in = elevators)
+        context['results'] = []
+        for elevator in queryset:
+            context['results'].append(
+                json.loads(elevator.display_status())
+            )
+        context = update_response_keys(True, 'Successfully fetched response',
+                                           "nil",
+                                           context['results'])
+        return Response(context, status=status.HTTP_200_OK)
+
+
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
-    
+
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        context = initialize_response_keys()
-        context["flag"] = True
-        context["message"] = f'Building created successfully'
-        context['data'] = serializer.data
-        
+        self.perform_create(serializer)    
+        context = update_response_keys(True, 'Building created successfully',
+                                           "nil",
+                                           serializer.data)
+
         return Response(context, status=status.HTTP_201_CREATED)

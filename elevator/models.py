@@ -2,7 +2,7 @@ from django.db import models
 from elevator.managers import BaseModelManager
 import redis
 from django.conf import settings
-
+import json
 class BaseModel(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -31,7 +31,9 @@ class Elevator(BaseModel):
         return self.name
 
     def _get_redis_connection(self):
-        return redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+        redis_url = settings.CACHES['default']['LOCATION']
+        parsed_url = redis.connection.ConnectionPool.from_url(redis_url)
+        return redis.StrictRedis(connection_pool=parsed_url)
 
     def display_status(self):
         cache_key = f"elevator:{self.id}:status"
@@ -40,13 +42,15 @@ class Elevator(BaseModel):
         status = cache.get(cache_key)
         if status is None:
             status = {
+                'id': self.id,
                 'name': self.name,
                 'current_floor': self.current_floor,
                 'is_door_open': self.is_door_open,
                 'is_operational': self.is_operational
             }
+            
             # Cache the status data for future access with a TTL (e.g., 60 seconds)
-            cache.set(cache_key, status, timeout=60)
+            cache.set(cache_key, json.dumps(status))
 
         return status
     
