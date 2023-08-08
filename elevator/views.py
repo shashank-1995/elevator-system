@@ -108,13 +108,13 @@ class ElevatorViewSet(viewsets.ModelViewSet):
 
         # process request for each elevator
         for elevator in elevators:
-            elevator_response[elevator.id]["requests"] = self.process_requests_for_elevator(elevator)
+            elevator_response[elevator.id]["elevator_requests"] = copy.deepcopy(elevator.requests)
+            elevator_response[elevator.id]["elevator_logs"] = self.process_requests_for_elevator(elevator)
 
         final_response = list(elevator_response.values())
         if final_response:
             context["message"] = 'Successfully fetched response'
             context['data'] = final_response
-
 
         return Response(context, status=status.HTTP_200_OK)
 
