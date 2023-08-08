@@ -4,13 +4,19 @@ from .models import Elevator, Building
 from .serializers import ElevatorSerializer, BuildingSerializer
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from elevator.utilities import validate_and_get_building, validate_num_elevators
+from elevator.utilities import (validate_and_get_building,
+                                validate_num_elevators,
+                                validate_floor_requests,
+                                validate_request_queue,
+                                initialize_response_keys)
 import copy
+
 class ElevatorViewSet(viewsets.ModelViewSet):
     queryset = Elevator.objects.all()
     serializer_class = ElevatorSerializer
-    
+
     def create(self, request):
+        context = initialize_response_keys()
         num_elevators = request.data.get('num_elevators')
         building_id = request.data.get('building_id')
 
@@ -34,16 +40,21 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             created_elevators.append(elevator)
             existing_elevator_names.add(name)
 
-        Elevator.objects.bulk_create(created_elevators, batch_size=100)
+        elevators_obj = Elevator.objects.bulk_create(created_elevators, batch_size=100)
+        if elevators_obj:
+            context["flag"] = True
+            context["message"] = f'{num_elevators} elevators initialized.'
+            context["data"] = self.get_serializer(elevators_obj, many=True).data
 
-        return Response({'message': f'{num_elevators} elevators initialized.'}, status=status.HTTP_201_CREATED)
-    
+        return Response(context, status=status.HTTP_201_CREATED)
+
+
     @action(detail=False, methods=['post'])
     def process_request(self, request, pk=None):
         """
         Process elevator requests for each elevator in the system.
 
-        This function takes elevator requests, active floors, building_id, request_queue, and lift_positions, and processes them to efficiently
+        This function takes elevator requests, active floors, building_id, request_queue, and current_lift_positions, and processes them to efficiently
         allocate elevators to fulfill the requests.
 
         Parameters:
@@ -53,38 +64,27 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         Returns:
             Response: A JSON response containing the elevator system response with information about each elevator's status and processed requests.
         """
-        active_floors = request.data.get('floor_requests')
+        context = initialize_response_keys()
+        floor_requests = request.data.get('floor_requests')
         building_id = request.data.get('building_id')
         request_queue =  request.data.get('request_queue')
-        lift_positions = request.data.get('lift_positions')
-        
-        elevators = Elevator.objects.filter(building=building_id)
-        
-        if len(lift_positions) < 0:
-            lift_positions = [0] * elevators.count()
-        elevator_response = {}
-        if elevators.count() == len(lift_positions):
-            count = 0
-            for elevator in elevators:
-                elevator_response[elevator.id] = {      
-                    "elevator_id": elevator.id,                                   
-                    "current_floor":  lift_positions[count],
-                    "is_operational": elevator.is_operational,
-                    "requests": [],
-                    "direction": "",
-                    "processed_requests": [],
-                    "error": None
-                }
-                elevator.current_floor = lift_positions[count]
-                elevator.save()
-                count += 1
-    
-        active_floors.sort()
+        current_lift_positions = request.data.get('current_lift_positions')
 
-        
+        if not validate_floor_requests(floor_requests):
+            return Response({'flag': False, 'error': 'Invalid floor requests'}, status=status.HTTP_400_BAD_REQUEST)
+
+        building = validate_and_get_building(building_id)
+        if not validate_request_queue(request_queue):
+            return Response({'flag': False, 'error': 'Invalid request queue'}, status=status.HTTP_400_BAD_REQUEST)
+        elevators = Elevator.objects.filter(building=building)
+        if elevators.count() != len(current_lift_positions):
+            current_lift_positions = [0] * elevators.count()
+
+        elevator_response = self.initialize_elevator_response(elevators, current_lift_positions)
+        floor_requests.sort()
 
         # process each floor, select the closest elevator for that floor
-        for queue_counter, floor in enumerate(active_floors):
+        for queue_counter, floor in enumerate(floor_requests):
             distance = []
             # find optimal lift for each floor
             for elevator in elevators:
@@ -93,49 +93,72 @@ class ElevatorViewSet(viewsets.ModelViewSet):
                     distance.append(abs(elevator.current_floor - floor))
                 else:
                     distance.append(999)
-
             queue_counter = queue_counter % len(request_queue)
             # find the selected lift
             selected_lift = distance.index(min(distance))
             elevator_selected = elevators[selected_lift]
-
             # assign service queue
             elevator_selected.requests = [floor] + request_queue[queue_counter]
-
             # set direction
             elevator_selected.direction = "Up" if elevator_selected.current_floor <= floor else "Down"
-
             # mark as selected
             elevator_selected.is_selected = True
             elevator_selected.save()
-            
-
             elevator_response[elevator_selected.id]["direction"] = elevator_selected.direction
-        
-        
+
         # process request for each elevator
         for elevator in elevators:
-            if elevator.is_selected:
-                elevator_response[elevator.id]["requests"] = copy.deepcopy(elevator.requests)
-                processed_requests = self.process_elevator_request(elevator)
-                elevator_response[elevator.id]["processed_requests"] = processed_requests
+            elevator_response[elevator.id]["requests"] = self.process_requests_for_elevator(elevator)
+
+        final_response = list(elevator_response.values())
+        if final_response:
+            context["message"] = 'Successfully fetched response'
+            context['data'] = final_response
+
+
+        return Response(context, status=status.HTTP_200_OK)
+
+
+    def process_requests_for_elevator(self, elevator):
+        if elevator.is_selected:
+            processed_requests = self.process_elevator_request(elevator)
+            return copy.deepcopy(processed_requests)
+        else:
+            elevator.is_operational = False
+            elevator.save()
+            return []
+
+
+    def initialize_elevator_response(self, elevators, current_lift_positions):
+        elevator_response = {}
+        count = 0
+        for elevator in elevators:
+            elevator_response[elevator.id] = {
+                "elevator_id": elevator.id,
+                "elevator_name": elevator.name,
+                "building_id": elevator.building.id,
+                "building_name": elevator.building.name,
+                "current_floor":  current_lift_positions[count],
+                "is_operational": elevator.is_operational
+            }
+            elevator.current_floor = current_lift_positions[count]
+            elevator.save()
+            count += 1
+        return elevator_response
+
+
+    def current_status(self, elevator, is_door_opened):
+        current_status_dict = {
+                "lift_number": elevator.id, "current_floor": elevator.current_floor, "current_direction": elevator.direction, "is_operational": elevator.is_operational
+            }
+        if is_door_opened == None:
+            return current_status_dict
+        else:
+            if is_door_opened:
+                current_status_dict["is_door_opened"] = True
             else:
-                # Mark unselected elevators as not operational
-                elevator.is_operational = False
-                elevator.save()
-        
-        final_response = []
-        for _, elevator_data in elevator_response.items():
-            final_response.append(elevator_data)
-        
-
-        return Response({'flag': True, 'results': final_response}, status=status.HTTP_200_OK)
-
-    
-    def current_status(self, elevator):
-        return {
-            "lift_number": elevator.id, "current_floor": elevator.current_floor, "is_operational": elevator.is_operational
-        }
+                current_status_dict["is_door_closed"] = True
+            return current_status_dict
 
 
     def process_elevator_request(self, elevator):
@@ -161,20 +184,21 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             self.move_towards_floor(elevator, closest_floor)
 
             # Step 3: Elevator has reached the closest floor, open and close the door
-            self.current_response_list.append({"lift_id": elevator.id, "is_door_opened": True})
-            self.current_response_list.append({"lift_id": elevator.id, "is_door_opened": False})
+            self.current_response_list.append(self.current_status(elevator, True))
+            self.current_response_list.append(self.current_status(elevator, False))
 
             # Step 4: Remove the current floor from the requests as it has been serviced
             elevator.requests.remove(elevator.current_floor)
 
             # Append the current status to the response list
-            self.current_response_list.append(self.current_status(elevator))
+            self.current_response_list.append(self.current_status(elevator, None))
 
         # All requests have been serviced, reset the elevator parameters
         self.reset_elevator_params(elevator)
 
         # Return the list of elevator status at each step
         return self.current_response_list
+
 
     def move_towards_floor(self, elevator, target_floor):
         """
@@ -196,7 +220,8 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             self.move_one_step(elevator)
 
             # Append the current status to the response list at each step
-            self.current_response_list.append(self.current_status(elevator))
+            self.current_response_list.append(self.current_status(elevator, None))
+
 
     def move_one_step(self, elevator):
         """
@@ -215,6 +240,7 @@ class ElevatorViewSet(viewsets.ModelViewSet):
             print(e)
             return e
 
+
     def reset_elevator_params(self, elevator):
         # when request finishes reset the direction
         elevator.direction = "Up"
@@ -222,14 +248,16 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         elevator.is_selected = False
         elevator.requests = []
         elevator.save()
-    
+
+
     @action(detail=True, methods=['post'])
     def open_elevator_door(self, request, pk=None):
         elevator = get_object_or_404(Elevator, pk=pk)
         # Open the door of the elevator
         elevator.is_door_open = True
         elevator.save()
-        return Response({'message': 'Door opened.'}, status=status.HTTP_200_OK)
+        return Response({'flag': True, 'message': 'Door opened.'}, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'])
     def close_elevator_door(self, request, pk=None):
@@ -237,7 +265,8 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         # Close the door of the elevator
         elevator.is_door_open = False
         elevator.save()
-        return Response({'message': 'Door closed.'}, status=status.HTTP_200_OK)
+        return Response({'flag': True, 'message': 'Door closed.'}, status=status.HTTP_200_OK)
+
 
     @action(detail=True, methods=['post'])
     def mark_not_working(self, request, pk=None):
@@ -245,7 +274,20 @@ class ElevatorViewSet(viewsets.ModelViewSet):
         # Mark the elevator as not working or in maintenance
         elevator.is_operational = False
         elevator.save()
-        return Response({'message': 'Elevator marked as not working.'}, status=status.HTTP_200_OK)
+        return Response({'flag': True, 'message': 'Elevator marked as not working.'}, status=status.HTTP_200_OK)
+
+
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
+    
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        context = initialize_response_keys()
+        context["flag"] = True
+        context["message"] = f'Building created successfully'
+        context['data'] = serializer.data
+        
+        return Response(context, status=status.HTTP_201_CREATED)

@@ -31,3 +31,21 @@ def validate_num_elevators(num_elevators):
         raise ValidationError("'num_elevators' must be greater than zero.")
 
     return num_elevators
+
+def validate_floor_requests(floor_requests):
+    if not isinstance(floor_requests, list) or not all(isinstance(floor, int) for floor in floor_requests):
+        return False
+    return True
+
+def validate_request_queue(request_queue):
+    if not isinstance(request_queue, list) or not all(isinstance(queue, list) and all(isinstance(floor, int) for floor in queue) for queue in request_queue):
+        return False
+    return True
+
+def validate_current_lift_positions(current_lift_positions, elevators_count):
+    if not isinstance(current_lift_positions, list) or len(current_lift_positions) != elevators_count or not all(isinstance(pos, int) for pos in current_lift_positions):
+        return False
+    return True
+
+def initialize_response_keys():
+    return {"flag":False,"message": "Unable to fetch response", "error":"nil"}

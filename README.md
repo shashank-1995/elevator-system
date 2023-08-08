@@ -1,8 +1,6 @@
-# elevator-system
-
 # Elevator System Project
 
-This is a Django-based Elevator System project that simulates the working of an elevator system in a building. The project uses Django REST framework to handle API requests.
+This is a Django-based Elevator System project that simulates the working of n number of elevators for any building. The project uses Django REST framework to handle API requests.
 
 - An elevator system, which can be initialized with `n` elevator.
 - Each elevator has below capabilites :
@@ -144,3 +142,4 @@ The project utilizes the following libraries and frameworks:
 - Django REST framework: A powerful and flexible toolkit for building Web APIs.
 - PostgreSQL: The preferred relational database for data storage.
 - Redis: Used
+- Django Middleware: Used
